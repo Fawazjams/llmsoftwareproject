@@ -39,11 +39,24 @@ def _sms(body: str, force: bool = False) -> None:
         _last_sms = time.time()
     try:
         from twilio.rest import Client
-        Client(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN")).messages.create(
-            body=body[:1500], from_=frm, to=to)
-        print(f"[SMS sent] {body}")
+        client = Client(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN"))
     except Exception as e:
-        print(f"[alerts] Twilio failed: {type(e).__name__}: {str(e)[:100]} | {body}")
+        print(f"[alerts] Twilio client failed: {e}")
+        return
+    if os.getenv("ALERT_MODE", "auto").split("#")[0].strip() != "call":
+        try:
+            client.messages.create(body=body[:1500], from_=frm, to=to)
+            print(f"[SMS sent] {body}")
+            return
+        except Exception as e:
+            print(f"[alerts] SMS blocked ({str(e)[:60]}), calling instead")
+    # Trial accounts can only use Twilio's predefined voice template: the owner's phone rings.
+    try:
+        client.calls.create(to=to, from_=frm, url=os.getenv(
+            "TWILIO_CALL_URL", "https://webhooks.twilio.com/v1/Voice/Template/voice_speech_recognition"))
+        print(f"[CALL placed to owner] {body}")
+    except Exception as e:
+        print(f"[alerts] Twilio call failed: {type(e).__name__}: {str(e)[:100]} | {body}")
 
 
 def _alert_worker(text: str) -> None:
