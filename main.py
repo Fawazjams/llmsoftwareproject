@@ -15,9 +15,39 @@ from ultralytics import YOLO
 
 load_dotenv()
 
+import builtins  # noqa: E402
+
+import numpy as np  # noqa: E402
+
 import alerts  # noqa: E402  (after load_dotenv so modules can read env at import)
+import employee  # noqa: E402
 import stretch  # noqa: E402
 from employee import is_employee  # noqa: E402
+
+try:
+    import state_export  # optional: feeds the 3D view
+except Exception:
+    state_export = None
+
+WIN_VIDEO, WIN_LOG = "Surveillance.ai", "Event log"
+PANEL_W, PANEL_H = 940, 530
+LOG_LINES = deque(maxlen=14)
+
+
+def _feed(line):
+    LOG_LINES.append(line)
+
+
+def _tee_print(*args, **kwargs):
+    builtins.print(*args, **kwargs)
+    text = " ".join(str(a) for a in args).strip()
+    if text:
+        _feed(text.splitlines()[-1] if "AI-verified" not in text else text)
+
+
+# Lines printed by employee.py (AI-verified) and alerts.py (SMS sent) also show on the panel
+employee.print = _tee_print
+alerts.print = _tee_print
 
 # CAMERA can be a webcam index ("0", "1") or a path/URL ("nest_backup.mp4")
 _src = os.getenv("CAMERA", "1")
@@ -42,15 +72,16 @@ VOTE_WINDOW = 15  # per-person employee votes kept (stops label flicker)
 
 
 def stamp():
-    return time.strftime("%I:%M:%S %p")
+    return time.strftime("%I:%M:%S %p").lstrip("0")
 
 
 def log(msg, state=None):
     line = f"[{stamp()}] {msg}"
     if state is not None:
-        line = (f"[{stamp()}] {msg:<34} | In store: {state['in_store']} | Came in: {state['came_in']} | "
+        line = (f"[{stamp()}] {msg:<22} | In store: {state['in_store']} | Came in: {state['came_in']} | "
                 f"Left: {state['left']} | Employees: {state['employees']}")
     print(line, flush=True)
+    _feed(line)
     with open("events.log", "a", encoding="utf-8") as f:
         f.write(line + "\n")
 
@@ -60,6 +91,36 @@ def to_px(zone, w, h):
         return None
     x1, y1, x2, y2 = zone
     return int(x1 * w), int(y1 * h), int(x2 * w), int(y2 * h)
+
+
+def _line_color(line):
+    if "ALERT" in line:
+        return (60, 60, 255)      # red
+    if "came in" in line:
+        return (90, 220, 90)      # green
+    if " left" in line:
+        return (0, 220, 240)      # yellow
+    if "AI-verified" in line:
+        return (240, 220, 0)      # cyan
+    if "SMS" in line:
+        return (255, 160, 200)
+    return (220, 220, 220)
+
+
+def render_log_panel(state):
+    img = np.full((PANEL_H, PANEL_W, 3), 24, dtype=np.uint8)
+    header = (f"In store: {state['in_store']}   Came in: {state['came_in']}   "
+              f"Left: {state['left']}   Employees: {state['employees']}")
+    cv2.rectangle(img, (0, 0), (PANEL_W, 48), (45, 45, 45), -1)
+    cv2.putText(img, header, (14, 32), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 255, 255), 2)
+    font, scale = cv2.FONT_HERSHEY_SIMPLEX, 0.5
+    max_chars = 105
+    y = 78
+    for line in LOG_LINES:
+        t = line if len(line) <= max_chars else line[:max_chars - 3] + "..."
+        cv2.putText(img, t, (12, y), font, scale, _line_color(line), 1, cv2.LINE_AA)
+        y += 32
+    return img
 
 
 def open_cap():
@@ -78,8 +139,12 @@ def main():
     counted = defaultdict(set)  # pid -> directions already counted
     votes = defaultdict(lambda: deque(maxlen=VOTE_WINDOW))
     state = {"in_store": 0, "came_in": 0, "left": 0, "employees": 0}
-    cv2.namedWindow("Surveillance.ai", cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
-    cv2.resizeWindow("Surveillance.ai", 1280, 720)
+    cv2.namedWindow(WIN_VIDEO, cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
+    cv2.resizeWindow(WIN_VIDEO, PANEL_W, PANEL_H)
+    cv2.moveWindow(WIN_VIDEO, 0, 0)
+    cv2.namedWindow(WIN_LOG, cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
+    cv2.resizeWindow(WIN_LOG, PANEL_W, PANEL_H)
+    cv2.moveWindow(WIN_LOG, 960, 0)
 
     while True:
         ok, frame = cap.read()
@@ -148,7 +213,14 @@ def main():
         for i, t in enumerate(hud):
             cv2.putText(frame, t, (10, 28 + 28 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
-        cv2.imshow("Surveillance.ai", frame)
+        if state_export is not None:
+            try:
+                state_export.write_state(state, people, w, h)
+            except Exception:
+                pass
+
+        cv2.imshow(WIN_VIDEO, frame)
+        cv2.imshow(WIN_LOG, render_log_panel(state))
         key = cv2.waitKey(1) & 0xFF
         if key == ord("s"):
             alerts.summarize_session("events.log")
