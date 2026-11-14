@@ -8,7 +8,7 @@ Hackathon: **LLMSoftware x UTD, Challenge 1 "Surveillance.ai: Who's Coming, Who'
 2. **Customers going out and coming in** must be counted.
 3. **Employees coming in and employees going out** must ALSO be counted (done in main.py:
    `EMPLOYEE #3 came in` / `EMPLOYEE #3 left` log lines, "Staff came in / Staff left" counters).
-The demo and the demo script must show all of these on screen. See issue #7.
+The demo and the demo script must show all of these on screen. See issue #8.
 
 ## Live dashboard (one screen)
 `python main.py` serves everything at **http://localhost:8765**: counters on top, camera top-left,
