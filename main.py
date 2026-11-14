@@ -81,7 +81,8 @@ def door_config():
 
 
 CROSS_COOLDOWN = 3.0  # s between counted crossings for the same person (stops jitter double counts)
-DEAD_BAND = 0.08      # fraction of frame around the line where side changes are ignored
+SPOT_FRAMES = 8       # frames a person must be tracked before the "spotted" log line
+DEAD_BAND = 0.08     # fraction of frame around the line where side changes are ignored
 TOO_CLOSE = 0.60      # boxes wider than this fraction of the frame are too close to judge a crossing
 FORGET_AFTER = 3.0    # s: drop door state for track IDs not seen this long
 
@@ -169,6 +170,8 @@ def main():
     last_cross = {}  # pid -> time of last counted crossing
     last_seen = {}   # pid -> time last seen
     role = {}        # pid -> True (employee) / False (customer), fixed at first crossing
+    announced = set()  # pids already logged as spotted
+    last_label = {}    # pid -> latest employee/customer vote
     votes = defaultdict(lambda: deque(maxlen=VOTE_WINDOW))
     state = {"in_store": 0, "came_in": 0, "left": 0, "employees": 0, "emp_in": 0, "emp_out": 0}
     web_ui = os.getenv("WEB_UI", "1").split("#")[0].strip() == "1" and state_export is not None
@@ -211,6 +214,17 @@ def main():
             last_seen.pop(pid, None)
             last_side.pop(pid, None)
             last_cross.pop(pid, None)
+            if pid in announced:
+                announced.discard(pid)
+                log(f"{'EMPLOYEE' if role.get(pid, last_label.get(pid)) else 'CUSTOMER'} #{pid} out of view")
+
+        # Presence log: one line when a person has been tracked steadily (~0.5 s), so the log shows
+        # who is on camera even before anyone crosses the door.
+        for pid, _, emp in people:
+            last_label[pid] = emp
+            if pid not in announced and len(votes[pid]) >= SPOT_FRAMES:
+                announced.add(pid)
+                log(f"EMPLOYEE #{pid} on the floor" if emp else f"CUSTOMER #{pid} spotted")
 
         margin = int((h if axis == "y" else w) * DEAD_BAND)  # dead band so jitter on the line doesn't count
         for pid, box, employee in people:
