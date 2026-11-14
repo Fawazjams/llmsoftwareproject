@@ -3,6 +3,18 @@
 Hackathon: **LLMSoftware x UTD, Challenge 1 "Surveillance.ai: Who's Coming, Who's Leaving"**.
 **Hard deadline: code pushed by 3:50 PM. The team submits at 4:00.** Small, working, merged beats ambitious.
 
+## ⚠️ JUDGE'S REQUIREMENTS (said live at the event, highest priority)
+1. **Anyone in an apron = EMPLOYEE. Everyone else = CUSTOMER.**
+2. **Customers going out and coming in** must be counted.
+3. **Employees coming in and employees going out** must ALSO be counted (done in main.py:
+   `EMPLOYEE #3 came in` / `EMPLOYEE #3 left` log lines, "Staff came in / Staff left" counters).
+The demo and the demo script must show all of these on screen. See issue #7.
+
+## Live dashboard (one screen)
+`python main.py` serves everything at **http://localhost:8765**: counters on top, camera top-left,
+event log top-right, 3D view bottom-center (`?three=<url of the three.js page>`). Set `WEB_UI=0` in
+`.env` to get the old OpenCV windows back.
+
 ## The challenge (judges score against this)
 Live camera (Logitech webcam, `CAMERA=1`). Detect and track every person with a stable ID, label each one
 **Employee** (black LLMSoftware apron, OR standing behind the counter) or **Customer**, count customers

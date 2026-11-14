@@ -31,7 +31,7 @@ except Exception:
 
 WIN_VIDEO, WIN_LOG = "Surveillance.ai", "Event log"
 PANEL_W, PANEL_H = 940, 530
-LOG_LINES = deque(maxlen=14)
+LOG_LINES = deque(maxlen=40)
 
 
 def _feed(line):
@@ -140,12 +140,17 @@ def main():
     counted = defaultdict(set)  # pid -> directions already counted
     votes = defaultdict(lambda: deque(maxlen=VOTE_WINDOW))
     state = {"in_store": 0, "came_in": 0, "left": 0, "employees": 0, "emp_in": 0, "emp_out": 0}
-    cv2.namedWindow(WIN_VIDEO, cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
-    cv2.resizeWindow(WIN_VIDEO, PANEL_W, PANEL_H)
-    cv2.moveWindow(WIN_VIDEO, 0, 0)
-    cv2.namedWindow(WIN_LOG, cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
-    cv2.resizeWindow(WIN_LOG, PANEL_W, PANEL_H)
-    cv2.moveWindow(WIN_LOG, 960, 0)
+    web_ui = os.getenv("WEB_UI", "1").split("#")[0].strip() == "1" and state_export is not None
+    if web_ui:
+        print("Open the dashboard: http://localhost:" + (os.getenv("STATE_HTTP_PORT") or "8765").split("#")[0].strip()
+              + "   (Ctrl+C here to stop)", flush=True)
+    else:
+        cv2.namedWindow(WIN_VIDEO, cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
+        cv2.resizeWindow(WIN_VIDEO, PANEL_W, PANEL_H)
+        cv2.moveWindow(WIN_VIDEO, 0, 0)
+        cv2.namedWindow(WIN_LOG, cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
+        cv2.resizeWindow(WIN_LOG, PANEL_W, PANEL_H)
+        cv2.moveWindow(WIN_LOG, 960, 0)
 
     while True:
         ok, frame = cap.read()
@@ -223,10 +228,13 @@ def main():
 
         if state_export is not None:
             try:
-                state_export.write_state(state, people, w, h)
+                state_export.write_state(state, people, w, h, log=list(LOG_LINES))
+                state_export.set_frame(frame)
             except Exception:
                 pass
 
+        if web_ui:
+            continue
         cv2.imshow(WIN_VIDEO, frame)
         cv2.imshow(WIN_LOG, render_log_panel(state))
         key = cv2.waitKey(1) & 0xFF
