@@ -253,6 +253,11 @@ def main():
             cv2.putText(frame, f"{'EMPLOYEE' if employee else 'CUSTOMER'} #{pid}", (x1, max(y1 - 6, 12)),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
+        # Customers in store = door count (came in - left), but never fewer than the customers
+        # visible right now (same idea as "Employees on floor").
+        visible_customers = sum(1 for p, _, emp in people if not role.get(p, emp))
+        state["in_store"] = max(state["came_in"] - state["left"], visible_customers, 0)
+
         for alert in stretch.on_frame(people, front_px, zone_px):
             log(f"ALERT: {alert}")
             alerts.send_alert(alert)
