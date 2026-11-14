@@ -63,6 +63,13 @@
   .log div.in { color:var(--good); } .log div.out { color:var(--orange); } .log div.alrt { color:var(--err); font-weight:700; }
   .privacy { font-size:12px; color:var(--muted); margin-top:10px; }
   @media (max-width:900px) { main { grid-template-columns:1fr; padding:16px; } }
+  .linectl { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px; font-size:13px; }
+  .linectl button { border:3px solid #000; background:#fff; font:700 12px/1 inherit; padding:6px 10px; cursor:pointer;
+    box-shadow:3px 3px 0 #000; }
+  .linectl button:active { transform:translate(2px,2px); box-shadow:1px 1px 0 #000; }
+  .linectl input[type=range] { flex:1; min-width:140px; accent-color:#e53935; }
+  .linectl #lc-val { font-variant-numeric:tabular-nums; min-width:3ch; font-weight:700; }
+  .lc-sides { color:var(--muted); font-size:12px; }
 </style>
 </head>
 <body>
@@ -77,6 +84,14 @@
       <span class="rec">REC OFF · no video saved</span>
       <div><b>Live footage</b><span>Camera feed appears here when main.py is streaming</span></div>
       <img id="feed" hidden alt="Live camera">
+    </div>
+    <div class="linectl">
+      <b>Door line</b>
+      <button id="lc-axis" type="button">Vertical</button>
+      <input id="lc-pos" type="range" min="5" max="95" value="50" aria-label="Door line position">
+      <span id="lc-val">50%</span>
+      <button id="lc-swap" type="button">Swap in/out</button>
+      <span id="lc-sides" class="lc-sides"></span>
     </div>
   </section>
   <section class="stats">
@@ -388,6 +403,25 @@ const cam = $("feed");
   img.src = `http://${location.hostname}:8765/frame.jpg?t=${Date.now()}`;
 })();
 poll(); setInterval(poll, 200);
+
+// Door line controls -> main.py's /config (state_export, port 8765). Live, no restart.
+const CFG = `http://${location.hostname}:8765/config`;
+let line = { axis: "x", pos: 0.5, invert: false };
+function showLine() {
+  $("lc-axis").textContent = line.axis === "x" ? "Vertical" : "Horizontal";
+  $("lc-pos").value = Math.round(line.pos * 100);
+  $("lc-val").textContent = Math.round(line.pos * 100) + "%";
+  const [a, b] = line.axis === "x" ? ["left", "right"] : ["top", "bottom"];
+  $("lc-sides").textContent = `${line.invert ? a : b} = inside · ${line.invert ? b : a} = outside`;
+}
+async function setLine(params) {
+  try { line = await (await fetch(CFG + "?" + new URLSearchParams(params))).json(); showLine(); } catch (e) {}
+}
+$("lc-axis").onclick = () => setLine({ axis: line.axis === "x" ? "y" : "x" });
+$("lc-swap").onclick = () => setLine({ invert: line.invert ? 0 : 1 });
+$("lc-pos").oninput = e => { $("lc-val").textContent = e.target.value + "%"; };
+$("lc-pos").onchange = e => setLine({ pos: e.target.value / 100 });
+setLine({});
 </script>
 </body>
 </html>
