@@ -64,7 +64,8 @@ First run downloads `yolov8n.pt` (~6 MB). Tune the employee thresholds live with
 | `APRON_AI_LOW`, `APRON_AI_HIGH` | "Unsure" band that triggers a Claude vision check |
 | `EMPLOYEE_AI`, `EMPLOYEE_AI_MODEL`, `EMPLOYEE_AI_MAX_CALLS` | Turn the vision check on/off, model, per-session call cap |
 | `ANTHROPIC_API_KEY` | Claude (alerts, summaries, vision check) |
-| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM`, `ALERT_TO` | SMS alerts to the owner |
+| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM`, `ALERT_TO` | Phone call to the owner |
+| `NTFY_TOPIC` | Push notification with the alert text (ntfy app, subscribe to this topic) |
 
 ## Privacy
 - **No face recognition.** Staff and customers are told apart by apron or position only.

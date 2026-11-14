@@ -26,8 +26,24 @@ def _claude(prompt: str, max_tokens: int) -> str | None:
         return None
 
 
+def _push(body: str) -> None:
+    """Custom-text phone notification via ntfy (free, no account). Phone: ntfy app, subscribe to NTFY_TOPIC."""
+    topic = (os.getenv("NTFY_TOPIC") or "").split("#")[0].strip()
+    if not topic:
+        return
+    try:
+        import urllib.request
+        req = urllib.request.Request(f"https://ntfy.sh/{topic}", data=body.encode("utf-8"), method="POST",
+                                     headers={"Title": "In-N-Out alert", "Priority": "urgent", "Tags": "rotating_light"})
+        urllib.request.urlopen(req, timeout=5).read()
+        print(f"[PUSH sent] {body}")
+    except Exception as e:
+        print(f"[alerts] push failed: {type(e).__name__}: {str(e)[:80]}")
+
+
 def _sms(body: str, force: bool = False) -> None:
     global _last_sms
+    _push(body)
     frm, to = os.getenv("TWILIO_FROM", "").strip(), os.getenv("ALERT_TO", "").strip()
     if not frm or not to:
         print(f"[SMS skipped: no number] {body}")
