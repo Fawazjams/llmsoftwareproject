@@ -56,6 +56,14 @@ class _Handler(BaseHTTPRequestHandler):
             elif path in ("/", "/index.html"):
                 with open(os.path.join(HERE, "dashboard.html"), "rb") as f:
                     self._send(f.read(), "text/html; charset=utf-8")
+            elif path == "/frame.jpg":
+                with _frame_cv:
+                    jpg = _jpeg
+                if jpg is None:
+                    self.send_response(503)
+                    self.end_headers()
+                else:
+                    self._send(jpg, "image/jpeg")
             elif path == "/summary":
                 import alerts
                 threading.Thread(target=alerts.summarize_session, args=("events.log",), daemon=True).start()

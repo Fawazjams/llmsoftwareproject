@@ -55,10 +55,10 @@
 </section>
 
 <section class="main">
-  <div class="panel video"><h2>Camera</h2><img src="/video" alt="Live camera"></div>
+  <div class="panel video"><h2>Camera</h2><img id="cam" src="/frame.jpg" alt="Live camera"></div>
   <div class="panel log"><h2>Event log</h2><pre id="log"></pre></div>
-  <div class="panel three"><h2>3D store view</h2><div id="three-slot" class="empty">
-    Add <code>?three=http://localhost:PORT</code> to this page's URL to show the 3D model</div></div>
+  <div class="panel three"><h2>3D store view</h2><div id="three-slot" class="empty"><div>
+    Add <code>?three=http://localhost:PORT</code> to this page's URL to show the 3D model</div></div></div>
 </section>
 
 <script>
@@ -82,6 +82,15 @@
     } catch (e) {}
   }
   setInterval(tick, 300); tick();
+  // Camera: pull the latest frame back-to-back; survives app restarts (no long-lived stream).
+  const cam = document.getElementById("cam");
+  function nextFrame() {
+    const img = new Image();
+    img.onload = () => { cam.src = img.src; setTimeout(nextFrame, 30); };
+    img.onerror = () => setTimeout(nextFrame, 500);
+    img.src = "/frame.jpg?t=" + Date.now();
+  }
+  nextFrame();
   document.getElementById("sum").onclick = () => fetch("/summary");
 </script>
 </body>
