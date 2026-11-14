@@ -1,4 +1,4 @@
-"""Surveillance.ai: live customer in/out counter (LLMSoftware x UTD Challenge 1).
+"""Footfall: live customer in/out counter (LLMSoftware x UTD Challenge 1).
 
 OWNER: Jamshed (issue #1). Other modules plug in through fixed functions:
   employee.py (Nandhan), stretch.py (Lokesh), alerts.py (Arpit).
@@ -29,7 +29,7 @@ try:
 except Exception:
     state_export = None
 
-WIN_VIDEO, WIN_LOG = "Surveillance.ai", "Event log"
+WIN_VIDEO, WIN_LOG = "Footfall", "Event log"
 PANEL_W, PANEL_H = 940, 530
 LOG_LINES = deque(maxlen=40)
 

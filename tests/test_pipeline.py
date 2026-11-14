@@ -1,4 +1,4 @@
-"""Offline tests for Surveillance.ai: no camera, no network. Run: python -m pytest -q tests"""
+"""Offline tests for Footfall: no camera, no network. Run: python -m pytest -q tests"""
 import importlib
 import os
 import sys
