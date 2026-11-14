@@ -44,3 +44,24 @@ comment on issue #1 instead of editing it.
   `stretch.hud_lines() -> list[str]`
   where `people = [(pid, (x1,y1,x2,y2), is_employee), ...]`
 - `alerts.send_alert(text)` (non-blocking), `alerts.summarize_session(log_path)`
+
+## 3D model feed (for Arpit)
+`state_export.write_state(state, people, w, h)` runs every frame and publishes the live scene (max 5x/sec):
+- **File:** `live_state.json` in the folder `main.py` runs from (gitignored)
+- **HTTP:** set `STATE_HTTP_PORT=8765` in `.env` → `GET http://localhost:8765/state` (CORS enabled)
+
+```json
+{"t": 1763150000.1,
+ "counts": {"in_store": 3, "came_in": 9, "left": 6, "employees": 2},
+ "people": [{"id": 7, "role": "customer", "x": 0.42, "y": 0.81, "w": 0.12, "h": 0.55}],
+ "door_y": 0.5}
+```
+`x` = box center, `y` = feet (bottom of box), `w`/`h` = box size; all are fractions 0..1 of the frame.
+
+```js
+setInterval(async () => {
+  const s = await (await fetch("http://localhost:8765/state")).json();
+  s.people.forEach(p => placeAvatar(p.id, p.x, p.y, p.role)); // your three.js code
+  updateCounters(s.counts);
+}, 200);
+```

@@ -6,3 +6,5 @@ events.log
 .venv/
 .env*
 !.env.example
+live_state.json
+live_state.json.tmp
