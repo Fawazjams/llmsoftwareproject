@@ -24,7 +24,7 @@ import time
 import cv2
 import numpy as np
 
-BLACK_MEDIAN_V = int(os.getenv("BLACK_MEDIAN_V", "75"))  # chest median brightness below this = black top
+BLACK_MEDIAN_V = int(os.getenv("BLACK_MEDIAN_V", "105"))  # chest median brightness below this = black top
 
 APRON_SHARE = float(os.getenv("APRON_SHARE", "0.35"))   # share of black torso pixels = apron
 BLACK_V_MAX = int(os.getenv("BLACK_V_MAX", "60"))       # HSV brightness ceiling for "black"
