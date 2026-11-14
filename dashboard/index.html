@@ -4,80 +4,110 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Surveillance.ai · Live Floor</title>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@700;800;900&family=Work+Sans:wght@400;500;600;700&family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --ink: #17211c; --muted: #5c564c; --paper: #fffdf8; --paper-2: #f3ecdf; --line: #ddd4c6;
-    --copper: #8d3d14; --copper-deep: #6e3012; --good: #145c38; --good-bg: #e5f2ea;
-    --warn: #6d4a10; --warn-bg: #f8efd8; --weak: #7a2e2e; --weak-bg: #f8e6e2;
-    --serif: "Palatino Linotype", Palatino, Georgia, serif;
-    --sans: "Segoe UI", "Helvetica Neue", sans-serif;
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; }
-  body { font-family: var(--sans); color: var(--ink); background: #efe7db; overflow: hidden; }
-  #scene { position: fixed; inset: 0; }
-  .panel {
-    position: absolute; z-index: 2; top: 16px; left: 16px; bottom: 16px;
-    width: min(400px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 14px;
-    padding: 22px; background: rgba(255, 253, 248, 0.95); border: 1px solid rgba(255,255,255,.75);
-    border-radius: 20px; box-shadow: 0 18px 50px rgba(20, 24, 20, 0.22); overflow: hidden;
-  }
-  .brand { display: flex; gap: 12px; align-items: center; }
-  .brand-mark {
-    width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px;
-    background: var(--ink); color: var(--paper); font-family: var(--serif); font-size: 24px;
-  }
-  .brand strong { display: block; font-family: var(--serif); font-size: 26px; font-weight: 600; line-height: 1; }
-  .brand small { color: var(--muted); }
-  .live { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 13px;
-    background: var(--good-bg); color: var(--good); border-radius: 999px; padding: 4px 10px; }
-  .live i { width: 8px; height: 8px; border-radius: 50%; background: var(--good); animation: pulse 1.4s infinite; }
-  @keyframes pulse { 50% { opacity: .25; } }
-  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .stat { background: white; border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
-  .stat span { display: block; color: var(--muted); font-size: 13px; }
-  .stat b { font-family: var(--serif); font-size: 38px; font-weight: 600; line-height: 1.1; }
-  .stat.hero { grid-column: span 2; background: var(--ink); color: var(--paper); border-color: var(--ink); }
-  .stat.hero span { color: #cfc6b8; }
-  .stat.hero b { font-size: 54px; }
-  h3 { margin: 4px 0 0; font-family: var(--serif); font-size: 18px; font-weight: 600; }
-  .alert { background: var(--weak-bg); color: var(--weak); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
-  .log { flex: 1; overflow-y: auto; background: var(--paper-2); border-radius: 12px; padding: 10px 12px;
-    font: 12px/1.6 Consolas, monospace; color: var(--muted); }
-  .log div.in { color: var(--good); } .log div.out { color: var(--copper); } .log div.alrt { color: var(--weak); font-weight: 700; }
-  .legend { position: absolute; z-index: 2; right: 16px; bottom: 16px; display: flex; gap: 8px; }
-  .chip { background: rgba(255,253,248,.95); border: 1px solid var(--line); border-radius: 999px;
-    padding: 6px 12px; font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
-  .chip i { width: 10px; height: 10px; border-radius: 50%; }
-  .privacy { font-size: 12px; color: var(--muted); }
+  :root { --bg:#f9f9ff; --ink:#191c22; --muted:#424753; --blue:#0052ac; --blue-soft:#d7e2ff; --orange:#b44f00;
+    --orange-soft:#ffdbca; --err:#ba1a1a; --err-soft:#ffdad6; --good:#145c38; --good-soft:#cfeedd;
+    --head:"Epilogue",sans-serif; --body:"Work Sans",sans-serif; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:var(--body); color:var(--ink); background:var(--bg); }
+  header { position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:16px; padding:14px 24px;
+    background:#fafaf9; border-bottom:4px solid #000; box-shadow:4px 4px 0 #000; }
+  .logo { font:italic 900 24px var(--head); letter-spacing:-.04em; text-transform:uppercase; }
+  header small { font-weight:600; color:var(--muted); }
+  .live { margin-left:auto; display:inline-flex; align-items:center; gap:8px; font-weight:700; font-size:14px;
+    text-transform:uppercase; background:var(--good-soft); border:3px solid #000; box-shadow:3px 3px 0 #000; padding:6px 12px; }
+  .live i { width:10px; height:10px; border-radius:50%; background:var(--err); animation:pulse 1.2s infinite; }
+  @keyframes pulse { 50% { opacity:.2; } }
+  main { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr); gap:24px; padding:28px 32px; max-width:1500px; margin:0 auto; }
+  .card { background:#fff; border:4px solid #000; box-shadow:6px 6px 0 #000; padding:18px; min-width:0; }
+  .card h2 { margin:0 0 12px; font:800 20px var(--head); text-transform:uppercase; letter-spacing:-.02em;
+    display:flex; align-items:center; gap:10px; }
+  .tag { font:700 12px var(--body); background:var(--blue); color:#fff; padding:3px 8px; border:2px solid #000; letter-spacing:0; }
+  .feed { position:relative; aspect-ratio:16/9; border:3px solid #000; overflow:hidden; display:grid; place-items:center;
+    background:repeating-linear-gradient(45deg,#191c22 0 18px,#22262e 18px 36px); color:#fff; text-align:center; }
+  .feed img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .feed b { display:block; font:900 28px var(--head); text-transform:uppercase; letter-spacing:-.02em; }
+  .feed span { font-size:14px; opacity:.75; }
+  .rec { position:absolute; top:10px; left:10px; z-index:1; background:var(--err); color:#fff; font:700 12px var(--body);
+    padding:4px 8px; border:2px solid #000; }
+  .stats { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-content:start; }
+  .stat { border:4px solid #000; box-shadow:4px 4px 0 #000; padding:14px; background:#fff; }
+  .stat span { display:block; font-weight:700; font-size:13px; text-transform:uppercase; }
+  .stat b { font:900 46px/1.1 var(--head); letter-spacing:-.04em; }
+  .stat.hero { grid-column:span 2; background:var(--blue); color:#fff; } .stat.hero b { font-size:72px; }
+  .stat.in { background:var(--good-soft); } .stat.out { background:var(--orange-soft); }
+  .stat.emp { grid-column:span 2; background:var(--blue-soft); }
+  .scene-wrap { position:relative; }
+  #scene { height:440px; border:3px solid #000; overflow:hidden; }
+  #offline { position:absolute; top:16px; right:16px; background:#fff; border:3px solid #000; box-shadow:4px 4px 0 #000; padding:8px 14px; font-size:13px; text-align:right; }
+  #offline[hidden] { display:none; }
+  #offline b { display:block; font:900 15px var(--head); text-transform:uppercase; }
+  .twin-title { position:absolute; top:14px; left:16px; pointer-events:none; font:900 28px/0.95 "Orbitron",sans-serif; letter-spacing:.02em;
+    text-transform:uppercase; background:linear-gradient(90deg,#2a4df0,#10207a); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .twin-cap { position:absolute; top:76px; left:17px; max-width:200px; pointer-events:none; font:12px/1.5 "Share Tech Mono",monospace; color:#1f3fd6; text-transform:uppercase; letter-spacing:.06em; }
+  .twin-hud { position:absolute; left:14px; bottom:14px; background:#f7f8ff; border:1px solid #b9c2ee; padding:12px 16px;
+    font:12px/1.6 "Share Tech Mono",monospace; color:#10207a; text-transform:uppercase; letter-spacing:.06em; }
+  .twin-hud b { display:block; font-size:13px; margin-bottom:4px; }
+  #reset { position:absolute; right:14px; bottom:14px; background:#1f3fd6; color:#fff; border:0; padding:10px 22px; cursor:pointer;
+    font:12px "Share Tech Mono",monospace; letter-spacing:.1em; clip-path:polygon(10px 0,100% 0,100% 100%,0 100%,0 10px); }
+  .live.off { background:#e1e2eb; } .live.off i { background:#727784; animation:none; }
+  .legend { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .chip { border:2px solid #000; padding:4px 10px; font-size:13px; font-weight:600; display:inline-flex; gap:6px; align-items:center; }
+  .chip i { width:10px; height:10px; border:1px solid #000; }
+  .side { display:flex; flex-direction:column; }
+  .alert { background:var(--err-soft); border:3px solid #000; box-shadow:3px 3px 0 #000; padding:10px 12px; font-weight:700;
+    font-size:13px; margin-bottom:12px; }
+  .log { flex:1; min-height:240px; max-height:420px; overflow-y:auto; border:3px solid #000; background:#f2f3fc; padding:10px 12px;
+    font:12px/1.7 ui-monospace,Menlo,Consolas,monospace; color:var(--muted); }
+  .log div.in { color:var(--good); } .log div.out { color:var(--orange); } .log div.alrt { color:var(--err); font-weight:700; }
+  .privacy { font-size:12px; color:var(--muted); margin-top:10px; }
+  @media (max-width:900px) { main { grid-template-columns:1fr; padding:16px; } }
 </style>
 </head>
 <body>
-<div id="scene"></div>
-
-<aside class="panel">
-  <div class="brand">
-    <div class="brand-mark">S</div>
-    <div><strong>Surveillance.ai</strong><small>Who's coming, who's leaving</small></div>
-    <span class="live"><i></i>Live</span>
-  </div>
-  <div class="stats">
+<header>
+  <div class="logo">Surveillance.ai</div><small>Who's coming, who's leaving</small>
+  <span class="live off" id="live"><i></i>Offline</span>
+</header>
+<main>
+  <section class="card">
+    <h2>Camera feed <span class="tag">CAM 1</span></h2>
+    <div class="feed">
+      <span class="rec">REC OFF · no video saved</span>
+      <div><b>Live footage</b><span>Camera feed appears here when main.py is streaming</span></div>
+      <img id="feed" hidden alt="Live camera">
+    </div>
+  </section>
+  <section class="stats">
     <div class="stat hero"><span>Customers in store</span><b id="in_store">0</b></div>
-    <div class="stat"><span>Came in</span><b id="came_in">0</b></div>
-    <div class="stat"><span>Left</span><b id="left">0</b></div>
-    <div class="stat" style="grid-column: span 2"><span>Employees on floor</span><b id="employees">0</b></div>
-  </div>
-  <div id="alerts"></div>
-  <h3>Event log</h3>
-  <div class="log" id="log"><div>Waiting for events from main.py…</div></div>
-  <div class="privacy">No face recognition. No video saved. Staff identified by apron or counter position only.</div>
-</aside>
-
-<div class="legend">
-  <span class="chip"><i style="background:#1d6b45"></i>Customer</span>
-  <span class="chip"><i style="background:#111"></i>Employee (black apron)</span>
-  <span class="chip"><i style="background:#c0392b"></i>Door line</span>
-</div>
+    <div class="stat in"><span>Came in</span><b id="came_in">0</b></div>
+    <div class="stat out"><span>Left</span><b id="left">0</b></div>
+    <div class="stat emp"><span>Employees on floor</span><b id="employees">0</b></div>
+  </section>
+  <section class="card">
+    <h2>Live floor <span class="tag" id="tracked">3D</span></h2>
+    <div class="scene-wrap"><div id="scene"></div>
+      <div class="twin-title">Live<br>Floor Twin</div>
+      <div class="twin-cap">Every figure is a tracked ID at its real position in the camera frame.</div>
+      <div class="twin-hud"><b>Floor status</b><span id="hud">Waiting for main.py</span></div>
+      <button id="reset">RESET VIEW</button>
+      <div id="offline"><div><b>Tracking offline</b>Start <code>python main.py</code> to see real positions</div></div></div>
+    <div class="legend">
+      <span class="chip"><i style="background:#1d8a55"></i>Customer (tracked ID)</span>
+      <span class="chip"><i style="background:#111"></i>Employee (black apron)</span>
+      <span class="chip"><i style="background:#ba1a1a"></i>Door line</span>
+      <span class="chip"><i style="background:#0052ac"></i>Behind counter</span>
+      <span class="chip"><i style="background:#f2b705"></i>Counter queue</span>
+    </div>
+  </section>
+  <section class="card side">
+    <h2>Event log</h2>
+    <div id="alerts"></div>
+    <div class="log" id="log"><div>Waiting for events from main.py…</div></div>
+    <div class="privacy">No face recognition. No video saved. Staff identified by apron or counter position only.</div>
+  </section>
+</main>
 
 <script type="importmap">
 { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
@@ -87,168 +117,277 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
+// The 3D floor IS the camera frame: image x -> floor x, image y -> floor depth.
+// Door line and zones are drawn from the same .env values main.py counts with,
+// and every figure is a real tracked person at their real position. Nothing is simulated.
+const W = 16, D = 9;
+const toWorld = (x, y) => new THREE.Vector3((x - 0.5) * W, 0, (y - 0.5) * D);
+
 const host = document.getElementById("scene");
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(devicePixelRatio);
-renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(host.clientWidth, host.clientHeight);
 renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
 host.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color("#efe7db");
-scene.fog = new THREE.Fog("#efe7db", 40, 90);
-const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 200);
-camera.position.set(14, 22, 26);
+scene.background = new THREE.Color("#e4e8fb");
+const VIEW = 7.6;
+const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 300);
+function fit() { const a = host.clientWidth / host.clientHeight; camera.left = -VIEW * a; camera.right = VIEW * a; camera.top = VIEW; camera.bottom = -VIEW; camera.updateProjectionMatrix(); }
+fit();
+camera.position.set(18.6, 17, 25.2);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(4, 0, 0);
+controls.target.set(-1.4, -0.6, 1.2);
+controls.saveState();   // so Reset View returns to this framing
 controls.enableDamping = true;
-controls.autoRotate = true;
-controls.autoRotateSpeed = 0.4;
-controls.maxPolarAngle = Math.PI / 2.2;
+controls.maxPolarAngle = Math.PI / 2.15;
+controls.minZoom = 0.6; controls.maxZoom = 3;
+document.getElementById("reset").onclick = () => controls.reset();
 
-scene.add(new THREE.HemisphereLight("#fff8ec", "#8a8175", 1.1));
-const sun = new THREE.DirectionalLight("#ffffff", 1.4);
-sun.position.set(10, 25, 12);
+scene.add(new THREE.HemisphereLight("#fff6e6", "#6b5a48", 1.5));
+const sun = new THREE.DirectionalLight("#fff1d6", 2.4);
+sun.position.set(9, 20, 6);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
-Object.assign(sun.shadow.camera, { left: -25, right: 25, top: 25, bottom: -25 });
+sun.shadow.radius = 4;
+Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 14, bottom: -14 });
 scene.add(sun);
 
-const mat = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.8, ...o });
-function box(w, h, d, color, x, y, z, o) {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(color, o));
-  m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; scene.add(m); return m;
+const mat = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.75, ...o });
+const INK = new THREE.LineBasicMaterial({ color: "#000" });
+function block(parent, w, h, d, color, x, y, z, o = {}, outline = true) {
+  const geo = new THREE.BoxGeometry(w, h, d);
+  const m = new THREE.Mesh(geo, mat(color, o));
+  m.position.set(x, y, z); m.castShadow = !o.transparent; m.receiveShadow = true;
+  if (outline) m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), INK));
+  parent.add(m); return m;
+}
+function textTexture(text, { bg = "#fff", fg = "#000", border = true, w = 512, h = 96, size = 46 } = {}) {
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const g = c.getContext("2d");
+  if (bg) { g.fillStyle = bg; g.fillRect(0, 0, w, h); }
+  if (border) { g.lineWidth = 10; g.strokeStyle = "#000"; g.strokeRect(5, 5, w - 10, h - 10); }
+  g.fillStyle = fg; g.font = `800 ${size}px Epilogue, "Work Sans", sans-serif`;
+  g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(text, w / 2, h / 2 + 3);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+function floorText(parent, text, x, z, width, fg = "#00000055") {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(width, width * 96 / 512),
+    new THREE.MeshBasicMaterial({ map: textTexture(text, { bg: null, fg, border: false }), transparent: true, depthWrite: false }));
+  m.rotation.x = -Math.PI / 2; m.position.set(x, 0.03, z); parent.add(m);
+}
+function tag(text, bg, fg = "#000") {
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: textTexture(text, { bg, fg }), depthTest: false }));
+  s.scale.set(2.5, 0.47, 1); s.renderOrder = 10; return s;
 }
 
-// Restaurant shell: 20 x 14 floor, door on the front wall (z = +7)
-const W = 20, D = 14;
-box(W, 0.2, D, "#d9c7a8", 0, -0.1, 0);                          // wood floor
-box(W + 8, 0.1, 8, "#bdb6a8", 0, -0.15, D / 2 + 4);            // sidewalk outside
-box(W, 3, 0.3, "#fffdf8", 0, 1.5, -D / 2);                       // back wall
-box(0.3, 3, D, "#f3ecdf", -W / 2, 1.5, 0);                       // left wall
-box(0.3, 3, D, "#f3ecdf", W / 2, 1.5, 0);                        // right wall
-box(7, 3, 0.3, "#f3ecdf", -6.5, 1.5, D / 2);                     // front wall, left of door
-box(7, 3, 0.3, "#f3ecdf", 6.5, 1.5, D / 2);                      // front wall, right of door
-box(6, 0.6, 0.3, "#f3ecdf", 0, 2.7, D / 2);                      // over the door
-const doorLine = box(6, 0.04, 0.12, "#c0392b", 0, 0.03, D / 2 - 0.4, { emissive: "#c0392b", emissiveIntensity: 0.6 });
+// ---- procedural textures (canvas, no image files) ----
+function canvasTex(w, h, draw, rx = 1, ry = 1) {
+  const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); return t;
+}
+const rnd = (a, b) => a + Math.random() * (b - a);
+const speck = (g, w, y0, y1, n, cols, s = 3) => { for (let i = 0; i < n; i++) { g.fillStyle = cols[i % cols.length]; g.fillRect(rnd(0, w), rnd(y0, y1), rnd(1, s), rnd(1, s)); } };
+const strataTex = rx => canvasTex(512, 256, (g, w, h) => {
+  const band = (y0, y1, col, amp) => { g.fillStyle = col; g.beginPath(); g.moveTo(0, h);
+    for (let x = 0; x <= w; x += 8) g.lineTo(x, y0 + Math.sin(x / 23 + y0) * amp + Math.sin(x / 7) * amp / 2); g.lineTo(w, h); g.fill(); };
+  g.fillStyle = "#5b3a22"; g.fillRect(0, 0, w, h);
+  band(0, h, "#5b3a22", 0); band(34, h, "#9a6a3c", 5); band(78, h, "#d8a763", 6); band(140, h, "#c9c2b0", 4); band(196, h, "#8d8f96", 5);
+  speck(g, w, 36, 140, 500, ["#b98850", "#7d5330", "#e4bb7e"]); speck(g, w, 142, 196, 900, ["#f1ede2", "#a59f90", "#8a8578"], 5);
+  speck(g, w, 198, h, 500, ["#7b7d85", "#a3a5ad", "#6c6e75"], 6);
+}, rx, 1);
+const brickTex = (rx, ry) => canvasTex(256, 128, (g, w, h) => {
+  g.fillStyle = "#8f8a80"; g.fillRect(0, 0, w, h);
+  const cols = ["#cfc9bb", "#bdb6a6", "#d9d3c6", "#aaa497", "#c4b9a4"];
+  for (let r = 0; r < 4; r++) for (let c = -1; c < 4; c++) { g.fillStyle = cols[Math.floor(rnd(0, 5))]; g.fillRect(c * 64 + (r % 2) * 32 + 2, r * 32 + 2, 60, 28); }
+  speck(g, w, 0, h, 300, ["#00000018", "#ffffff22"]);
+}, rx, ry);
+const plankTex = (rx, ry) => canvasTex(256, 256, (g, w, h) => {
+  const cols = ["#d9a865", "#cf9c58", "#e0b478", "#c8934f"];
+  for (let i = 0; i < 8; i++) { g.fillStyle = cols[i % 4]; g.fillRect(0, i * 32, w, 32); g.fillStyle = "#7a5228"; g.fillRect(0, i * 32, w, 2);
+    g.fillRect(((i * 97) % 200) + 20, i * 32, 2, 32); }
+  for (let i = 0; i < 160; i++) { g.fillStyle = "#6b441f20"; g.fillRect(rnd(0, w), rnd(0, h), rnd(10, 50), 1); }
+}, rx, ry);
+const paveTex = (rx, ry) => canvasTex(256, 256, (g, w, h) => {
+  g.fillStyle = "#7f838c"; g.fillRect(0, 0, w, h);
+  const cols = ["#b9bcc4", "#a9adb6", "#c4c7ce", "#9fa3ad"];
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) { g.fillStyle = cols[Math.floor(rnd(0, 4))]; g.fillRect(c * 64 + 2, r * 64 + 2, 60, 60); }
+  speck(g, w, 0, h, 500, ["#00000014", "#ffffff1c"]);
+}, rx, ry);
+const tmat = (map, o = {}) => new THREE.MeshStandardMaterial({ map, roughness: 0.9, ...o });
+const WOOD = "#c98f4e", WOOD_D = "#9a6a35";
+function tbox(parent, w, h, d, material, x, y, z) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
+  m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; parent.add(m); return m;
+}
 
-// Counter with kitchen zone behind it
-box(10, 1.1, 1.2, "#8d3d14", 4, 0.55, -3.5);                     // counter
-box(10.2, 0.1, 1.4, "#2b2b2b", 4, 1.15, -3.5);                   // counter top
-box(10, 0.02, 2.6, "#e9dccb", 4, 0.01, -5.6);                    // behind-counter zone
-box(1.2, 0.5, 0.8, "#444", 6, 1.45, -3.5);                       // register
+// ---- diorama, rebuilt whenever the config main.py reports changes ----
+let plan = null, planKey = "";
+function buildPlan(cfg) {
+  const key = JSON.stringify(cfg);
+  if (key === planKey) return;
+  planKey = key;
+  if (plan) scene.remove(plan);
+  plan = new THREE.Group(); scene.add(plan);
 
-// Tables + stools
-for (const [x, z] of [[-6, -2], [-6, 3], [-1, 3], [-1, -1]]) {
-  box(1.8, 0.1, 1.8, "#6e3012", x, 1, z);
-  box(0.2, 1, 0.2, "#3b2a1e", x, 0.5, z);
-  for (const [dx, dz] of [[1.3, 0], [-1.3, 0], [0, 1.3], [0, -1.3]]) {
-    const s = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.6, 16), mat("#17211c"));
-    s.position.set(x + dx, 0.3, z + dz); s.castShadow = true; scene.add(s);
+  // cutaway earth block with strata on every side
+  const H = 3.2, sx = tmat(strataTex(2)), sz = tmat(strataTex(3)), cap = mat("#6f7178");
+  tbox(plan, W + 0.8, H, D + 0.8, [sx, sx, cap, cap, sz, sz], 0, -H / 2 - 0.1, 0);
+  tbox(plan, W + 1.2, 0.25, D + 1.2, mat("#a89f8c"), 0, -H - 0.22, 0);
+
+  const doorZ = (cfg.door - 0.5) * D;
+  const nearD = D / 2 - doorZ, farD = doorZ + D / 2, sgn = cfg.inside_below ? 1 : -1;
+  const [inD, inZ, outD, outZ] = cfg.inside_below
+    ? [nearD, doorZ + nearD / 2, farD, doorZ - farD / 2] : [farD, doorZ - farD / 2, nearD, doorZ + nearD / 2];
+  tbox(plan, W + 0.8, 0.1, D + 0.8, mat("#8fae62"), 0, -0.06, 0);                                    // grass rim
+  if (inD > 0.01) tbox(plan, W, 0.12, inD, tmat(plankTex(inD / 3, W / 4)), 0, -0.01, inZ);           // store floor
+  if (outD > 0.01) tbox(plan, W, 0.08, outD, tmat(paveTex(W / 4, outD / 4)), 0, -0.03, outZ);        // street
+  if (inD > 1) floorText(plan, "INSIDE · STORE", -W / 2 + 3.2, inZ + sgn * (inD / 2 - 0.6), 5.5, "#3b250f99");
+  if (outD > 1) floorText(plan, "OUTSIDE", -W / 2 + 2.2, outZ - sgn * (outD / 2 - 0.6), 5.5, "#1b1d2399");
+
+  // store shell: brick wall along the far-left side of the store, with a window
+  if (inD > 1.5) {
+    const wall = tmat(brickTex(inD / 2, 2));
+    tbox(plan, 0.4, 3.4, inD, wall, -W / 2 - 0.2, 1.7, inZ);
+    tbox(plan, 0.5, 0.18, inD + 0.2, mat(WOOD_D), -W / 2 - 0.2, 3.49, inZ);
+    tbox(plan, 0.08, 1.2, Math.min(2.4, inD * 0.5), mat("#9fd3e8", { emissive: "#9fd3e8", emissiveIntensity: 0.35, roughness: 0.2 }), -W / 2 + 0.02, 2.0, inZ);
+    tbox(plan, 0.6, 0.9, Math.min(2.6, inD * 0.55), mat(WOOD), -W / 2 + 0.35, 0.5, inZ);            // bench under window
+    for (const dz of [-1, 1]) {                                                                       // planters
+      const z = inZ + dz * Math.min(inD / 2 - 0.5, 2.2);
+      tbox(plan, 0.5, 0.5, 0.5, mat("#b5552d"), -W / 2 + 0.4, 0.3, z);
+      const bush = new THREE.Mesh(new THREE.IcosahedronGeometry(0.42, 1), mat("#3f8f4a", { flatShading: true }));
+      bush.position.set(-W / 2 + 0.4, 0.85, z); bush.castShadow = true; plan.add(bush);
+    }
   }
+  // timber portal over the door line (the whole line is what main.py counts)
+  for (const x of [-W / 2 + 0.2, W / 2 - 0.2]) tbox(plan, 0.35, 3.6, 0.35, mat(WOOD), x, 1.8, doorZ);
+  tbox(plan, W + 0.4, 0.32, 0.42, mat(WOOD_D), 0, 3.7, doorZ);
+  tbox(plan, W - 0.4, 0.5, 0.08, mat("#17307a"), 0, 3.3, doorZ);                                      // sign board
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.42),
+    new THREE.MeshBasicMaterial({ map: textTexture("LLMSOFTWARE CAFE", { bg: null, fg: "#fff", border: false, w: 1024, h: 72, size: 52 }), transparent: true }));
+  sign.position.set(0, 3.3, doorZ + 0.05); plan.add(sign);
+  const back = sign.clone(); back.rotation.y = Math.PI; back.position.z = doorZ - 0.05; plan.add(back);
+  plan.userData.door = tbox(plan, W - 0.7, 0.05, 0.2, mat("#e0261c", { emissive: "#e0261c", emissiveIntensity: 0.8 }), 0, 0.07, doorZ);
+  const dl = tag("DOOR LINE", "#e0261c", "#fff"); dl.position.set(W / 2 - 1.6, 4.4, doorZ); plan.add(dl);
+
+  // street dressing (outside only): lamp post and kerb
+  if (outD > 1.5) {
+    const lx = W / 2 - 0.9, lz = outZ - sgn * (outD / 2 - 0.7);
+    tbox(plan, 0.14, 3.6, 0.14, mat("#23262e"), lx, 1.8, lz);
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), mat("#ffe9a8", { emissive: "#ffd45c", emissiveIntensity: 1 }));
+    lamp.position.set(lx, 3.75, lz); plan.add(lamp);
+    tbox(plan, W, 0.16, 0.25, mat("#e9e6dc"), 0, 0.05, outZ - sgn * (outD / 2 - 0.12));
+  }
+
+  // zones from .env (fractions of the frame)
+  const zone = (z, color, label, labelBg, counter) => {
+    if (!z) return;
+    const a = toWorld(z[0], z[1]), b = toWorld(z[2], z[3]);
+    const w = Math.abs(b.x - a.x), d = Math.abs(b.z - a.z), cx = (a.x + b.x) / 2, cz = (a.z + b.z) / 2;
+    tbox(plan, w, 0.04, d, mat(color, { transparent: true, opacity: 0.45 }), cx, 0.08, cz).castShadow = false;
+    for (const [bw, bd, bx, bz] of [[w, 0.1, cx, a.z], [w, 0.1, cx, b.z], [0.1, d, a.x, cz], [0.1, d, b.x, cz]])
+      tbox(plan, bw, 0.16, bd, mat(color), bx, 0.13, bz);
+    if (counter && w > 1) {                                                                           // wooden counter on the customer-facing edge
+      const ez = Math.max(a.z, b.z) - 0.3;
+      tbox(plan, w, 1.0, 0.55, tmat(plankTex(1, w / 3)), cx, 0.55, ez);
+      tbox(plan, w + 0.15, 0.1, 0.75, mat("#2a2c33", { roughness: 0.35 }), cx, 1.1, ez);
+      tbox(plan, 0.55, 0.4, 0.4, mat("#3a3d46"), cx + w / 2 - 0.6, 1.35, ez);                         // register
+    }
+    const t = tag(label, labelBg); t.position.set(cx, counter ? 3.2 : 1.0, cz - d / 2); plan.add(t);
+  };
+  zone(cfg.counter, "#1f3fd6", "BEHIND COUNTER", "#d7e2ff", true);
+  zone(cfg.front, "#f2b705", "COUNTER QUEUE", "#ffe9a8", false);
 }
+buildPlan({ door: 0.5, inside_below: true, counter: null, front: null });
 
-// Sign over the door
-const canvas = document.createElement("canvas"); canvas.width = 512; canvas.height = 96;
-const g = canvas.getContext("2d");
-g.fillStyle = "#17211c"; g.fillRect(0, 0, 512, 96);
-g.fillStyle = "#fffdf8"; g.font = "600 48px Palatino Linotype, Georgia, serif"; g.textAlign = "center";
-g.fillText("LLMSoftware Café", 256, 64);
-const sign = new THREE.Mesh(new THREE.PlaneGeometry(6, 1.1), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas) }));
-sign.position.set(0, 3.6, D / 2 + 0.2); scene.add(sign);
-
-// People: capsule body + head; employees wear a black apron
-function person(employee) {
+// ---- people: one figure per tracked ID, at the tracked position ----
+const SHIRTS = ["#1d8a55", "#2e6da4", "#b5651d", "#7a4a9e", "#c2410c", "#0f766e"];
+function makePerson(id, employee) {
   const grp = new THREE.Group();
-  const shirt = employee ? "#f3ecdf" : ["#1d6b45", "#2e6da4", "#b5651d", "#7a4a9e"][Math.floor(Math.random() * 4)];
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.35, 0.9, 6, 12), mat(shirt));
-  body.position.y = 0.85; body.castShadow = true; grp.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 16, 16), mat("#d8b48c"));
-  head.position.y = 1.75; head.castShadow = true; grp.add(head);
+  const shirt = employee ? "#f4f4f5" : SHIRTS[id % SHIRTS.length];
+  const add = (geo, color, y, o) => { const m = new THREE.Mesh(geo, mat(color, o)); m.position.y = y; m.castShadow = true; grp.add(m); return m; };
+  add(new THREE.CylinderGeometry(0.2, 0.24, 0.75, 16), "#2b2f3a", 0.38);           // legs
+  add(new THREE.CapsuleGeometry(0.33, 0.55, 8, 16), shirt, 1.15);                  // torso
+  add(new THREE.SphereGeometry(0.25, 20, 20), "#e0b98f", 1.98);                    // head (no face, by design)
   if (employee) {
-    const apron = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.95, 0.12), mat("#0d0d0d", { roughness: 0.5 }));
-    apron.position.set(0, 0.75, 0.33); grp.add(apron);
-    const strap = new THREE.Mesh(new THREE.TorusGeometry(0.37, 0.03, 6, 24), mat("#0d0d0d"));
-    strap.rotation.x = Math.PI / 2; strap.position.y = 0.95; grp.add(strap);
+    const apron = add(new THREE.BoxGeometry(0.56, 0.95, 0.1), "#0b0b0d", 0.95, { roughness: 0.45 });
+    apron.position.z = 0.3;
+    const strap = add(new THREE.TorusGeometry(0.34, 0.03, 8, 24), "#0b0b0d", 1.3); strap.rotation.x = Math.PI / 2;
   }
-  scene.add(grp);
-  return grp;
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.62, 32),
+    new THREE.MeshBasicMaterial({ color: employee ? "#000" : "#145c38", side: THREE.DoubleSide }));
+  ring.rotation.x = -Math.PI / 2; ring.position.y = 0.02; grp.add(ring);
+  const label = employee ? tag(`STAFF #${id}`, "#191c22", "#fff") : tag(`CUSTOMER #${id}`, "#cfeedd");
+  label.position.y = 2.75; grp.add(label);
+  grp.userData = { employee, target: new THREE.Vector3(), seen: 0 };
+  scene.add(grp); return grp;
 }
-
-const rand = (a, b) => a + Math.random() * (b - a);
-const insideSpot = () => new THREE.Vector3(rand(-8, 8), 0, rand(-1.8, 5.5));
-const staffSpot = () => new THREE.Vector3(rand(0, 8), 0, rand(-6.3, -4.8));
-const DOOR_IN = new THREE.Vector3(0, 0, D / 2 - 1), DOOR_OUT = new THREE.Vector3(0, 0, D / 2 + 5);
-
-const customers = [], staff = [];
-function addCustomer(fromDoor) {
-  const p = person(false);
-  p.position.copy(fromDoor ? DOOR_OUT : insideSpot());
-  p.userData = { path: fromDoor ? [DOOR_IN, insideSpot()] : [insideSpot()], leaving: false };
-  customers.push(p);
-}
-function removeCustomer() {
-  const p = customers.find(c => !c.userData.leaving);
-  if (!p) return;
-  p.userData.leaving = true;
-  p.userData.path = [DOOR_IN.clone(), DOOR_OUT.clone().add(new THREE.Vector3(rand(-6, 6), 0, 1))];
-}
-function syncStaff(n) {
-  while (staff.length < n) { const s = person(true); s.position.copy(staffSpot()); s.userData = { path: [staffSpot()] }; staff.push(s); }
-  while (staff.length > n) scene.remove(staff.pop());
-}
-
-function step(p, dt, speed) {
-  const target = p.userData.path[0];
-  if (!target) return true;
-  const d = target.clone().sub(p.position); d.y = 0;
-  if (d.length() < 0.1) { p.userData.path.shift(); return p.userData.path.length === 0; }
-  d.setLength(Math.min(d.length(), speed * dt));
-  p.position.add(d);
-  p.rotation.y = Math.atan2(d.x, d.z);
-  p.position.y = Math.abs(Math.sin(performance.now() / 120)) * 0.06;
-  return false;
+const people = new Map();
+function syncPeople(list) {
+  const now = performance.now();
+  for (const p of list) {
+    let g = people.get(p.id);
+    if (g && g.userData.employee !== p.employee) { scene.remove(g); g = null; }    // relabelled: rebuild
+    const pos = toWorld(Math.min(Math.max(p.x, 0), 1), Math.min(Math.max(p.y, 0), 1));
+    if (!g) { g = makePerson(p.id, p.employee); g.position.copy(pos); people.set(p.id, g); }
+    g.userData.target.copy(pos); g.userData.seen = now;
+  }
+  for (const [id, g] of people) if (now - g.userData.seen > 1500) { scene.remove(g); people.delete(id); }
 }
 
 const clock = new THREE.Clock();
 renderer.setAnimationLoop(() => {
-  const dt = Math.min(clock.getDelta(), 0.05);
-  for (const c of [...customers]) {
-    if (step(c, dt, 2.2)) {
-      if (c.userData.leaving) { scene.remove(c); customers.splice(customers.indexOf(c), 1); }
-      else if (Math.random() < 0.004) c.userData.path = [insideSpot()];
-    }
+  const dt = Math.min(clock.getDelta(), 0.05), k = 1 - Math.exp(-dt * 10);
+  for (const g of people.values()) {
+    const d = g.userData.target.clone().sub(g.position);
+    if (d.lengthSq() > 0.0004) g.rotation.y = Math.atan2(d.x, d.z);
+    g.position.addScaledVector(d, k);
   }
-  for (const s of staff) if (step(s, dt, 1.4) && Math.random() < 0.01) s.userData.path = [staffSpot()];
-  doorLine.material.emissiveIntensity = 0.4 + Math.abs(Math.sin(performance.now() / 400)) * 0.6;
+  if (plan.userData.door) plan.userData.door.material.emissiveIntensity = 0.5 + Math.abs(Math.sin(performance.now() / 400)) * 0.6;
   controls.update();
   renderer.render(scene, camera);
 });
-addEventListener("resize", () => {
-  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
+new ResizeObserver(() => {
+  fit();
+  renderer.setSize(host.clientWidth, host.clientHeight);
+}).observe(host);
 
-// Live data from events.log via dashboard.py
-let shown = null;
+// ---- live data from dashboard.py (live.json + events.log) ----
 const $ = id => document.getElementById(id);
+const esc = t => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 async function poll() {
-  try {
-    const s = await (await fetch("/api/state")).json();
-    for (const k of ["in_store", "came_in", "left", "employees"]) $(k).textContent = s[k];
-    const active = customers.filter(c => !c.userData.leaving).length;
-    if (shown === null) { for (let i = 0; i < s.in_store; i++) addCustomer(false); }
-    else { for (let i = active; i < s.in_store; i++) addCustomer(true); for (let i = s.in_store; i < active; i++) removeCustomer(); }
-    shown = s.in_store;
-    syncStaff(s.employees);
-    $("log").innerHTML = s.log.length ? s.log.slice().reverse().map(l => {
-      const cls = l.includes("ALERT") ? "alrt" : l.includes("came in") ? "in" : l.includes(" left") ? "out" : "";
-      return `<div class="${cls}">${l.replace(/</g, "&lt;")}</div>`;
-    }).join("") : "<div>Waiting for events from main.py…</div>";
-    $("alerts").innerHTML = s.alerts.slice(-1).map(a => `<div class="alert">${a.replace(/</g, "&lt;")}</div>`).join("");
-  } catch (e) { /* dashboard keeps rendering if the server blips */ }
+  let s = null;
+  try { s = await (await fetch("/api/state")).json(); } catch (e) { /* server blip: show offline */ }
+  const live = s && s.live;
+  $("offline").hidden = !!live;
+  $("live").className = live ? "live" : "live off";
+  $("live").lastChild.textContent = live ? "Live" : "Offline";
+  $("tracked").textContent = live ? `${live.people.length} tracked` : "3D";
+  $("hud").textContent = live ? `${live.people.length} TRACKED · ${live.in_store} IN STORE · ${live.employees} STAFF` : "WAITING FOR MAIN.PY";
+  if (live) { buildPlan({ door: live.door, inside_below: live.inside_below, counter: live.counter, front: live.front }); syncPeople(live.people); }
+  else syncPeople([]);
+  if (!s) return;
+  for (const k of ["in_store", "came_in", "left", "employees"]) $(k).textContent = s[k];
+  $("log").innerHTML = s.log.length ? s.log.slice().reverse().map(l => {
+    const cls = l.includes("ALERT") ? "alrt" : l.includes("came in") ? "in" : l.includes(" left") ? "out" : "";
+    return `<div class="${cls}">${esc(l)}</div>`;
+  }).join("") : "<div>Waiting for events from main.py…</div>";
+  $("alerts").innerHTML = s.alerts.slice(-1).map(a => `<div class="alert">${esc(a)}</div>`).join("");
 }
-poll(); setInterval(poll, 1000);
+// Camera: latest annotated frame from main.py's web feed (state_export, STATE_HTTP_PORT=8765)
+const cam = $("feed");
+(function nextFrame() {
+  const img = new Image();
+  img.onload = () => { cam.src = img.src; cam.hidden = false; setTimeout(nextFrame, 60); };
+  img.onerror = () => { cam.hidden = true; setTimeout(nextFrame, 1000); };
+  img.src = `http://${location.hostname}:8765/frame.jpg?t=${Date.now()}`;
+})();
+poll(); setInterval(poll, 200);
 </script>
 </body>
 </html>
