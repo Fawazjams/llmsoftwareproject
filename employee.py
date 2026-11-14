@@ -22,6 +22,9 @@ import threading
 import time
 
 import cv2
+import numpy as np
+
+BLACK_MEDIAN_V = int(os.getenv("BLACK_MEDIAN_V", "75"))  # chest median brightness below this = black top
 
 APRON_SHARE = float(os.getenv("APRON_SHARE", "0.35"))   # share of black torso pixels = apron
 BLACK_V_MAX = int(os.getenv("BLACK_V_MAX", "60"))       # HSV brightness ceiling for "black"
@@ -149,17 +152,21 @@ def is_employee(frame, box, counter_zone=None, pid=None):
         if zx1 <= cx <= zx2 and zy1 <= feet_y <= zy2:
             return True
 
-    torso = torso_crop(frame, box)
-    if torso is None:
+    # HARD RULE (demo): black clothing = EMPLOYEE, any other color = CUSTOMER.
+    # Look only at the middle of the chest (no background, no face) and use the MEDIAN
+    # brightness, so shadows and a dark room behind a white shirt can't flip it.
+    fh, fw = frame.shape[:2]
+    cx1, cx2 = max(x1, 0), min(x2, fw)
+    cy1, cy2 = max(y1, 0), min(y2, fh)
+    bw, bh = cx2 - cx1, cy2 - cy1
+    if bw < 10 or bh < 20:
         return False
-    share = apron_share(torso)
-    track = _track_for((x1, y1, x2, y2), pid)
-
-    if track["ai"] in (True, False):        # Claude already decided for this person
-        return track["ai"]
-    if AI_LOW <= share <= AI_HIGH:          # unsure: ask Claude once, use color meanwhile
-        _maybe_ask(track, torso)
-    return share > APRON_SHARE
+    chest = frame[cy1 + int(bh * 0.35): cy1 + int(bh * 0.65), cx1 + int(bw * 0.30): cx2 - int(bw * 0.30)]
+    if chest.size == 0:
+        return False
+    hsv = cv2.cvtColor(chest, cv2.COLOR_BGR2HSV)
+    v = float(np.median(hsv[:, :, 2]))
+    return v < BLACK_MEDIAN_V
 
 
 # ---- tuning tool: python employee.py ----------------------------------------
