@@ -76,7 +76,9 @@
   .callbar button { margin-left:auto; background:#e53935; color:#fff; border:3px solid #000; box-shadow:4px 4px 0 #000;
     font:800 18px/1 inherit; padding:14px 22px; cursor:pointer; text-transform:uppercase; letter-spacing:.5px; }
   .callbar button:active { transform:translate(3px,3px); box-shadow:1px 1px 0 #000; }
-  .callbar button:disabled { background:#2e7d32; cursor:default; }
+  .callbar.idle { background:#eceef3; color:#727784; }
+  .callbar button:disabled { background:#b9bcc6; color:#5c606b; box-shadow:2px 2px 0 #000; cursor:not-allowed; }
+  .callbar button.done { background:#2e7d32; color:#fff; }
 </style>
 </head>
 <body>
@@ -92,8 +94,8 @@
       <div><b>Live footage</b><span>Camera feed appears here when main.py is streaming</span></div>
       <img id="feed" hidden alt="Live camera">
     </div>
-    <div id="callbar" class="callbar" hidden>
-      <span>Customer waiting · no employee on the floor</span>
+    <div id="callbar" class="callbar idle">
+      <span id="callmsg">No customer waiting</span>
       <button id="callbtn" type="button">📞 Place employee call</button>
     </div>
     <div class="linectl">
@@ -385,6 +387,7 @@ new ResizeObserver(() => {
 
 // ---- live data from dashboard.py (live.json + events.log) ----
 const $ = id => document.getElementById(id);
+let calling = false;  // true while a call request is in flight (keeps the button state)
 const esc = t => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 async function poll() {
   let s = null;
@@ -394,7 +397,14 @@ async function poll() {
   $("live").className = live ? "live" : "live off";
   $("live").lastChild.textContent = live ? "Live" : "Offline";
   $("tracked").textContent = live ? `${live.people.length} tracked` : "3D";
-  $("callbar").hidden = !(live && live.unattended);
+  // Call button: always shown; red + clickable only when a customer is waiting with no employee.
+  if (!calling) {
+    const need = !!(live && live.unattended);
+    $("callbar").classList.toggle("idle", !need);
+    $("callbtn").disabled = !need;
+    $("callmsg").textContent = need ? "Customer waiting · no employee on the floor"
+      : live && live.employees ? "Employee on the floor · no call needed" : "No customer waiting";
+  }
   $("hud").textContent = live ? `${live.people.length} TRACKED · ${live.in_store} IN STORE · ${live.employees} STAFF` : "WAITING FOR MAIN.PY";
   if (live) { buildPlan({ door: live.door, inside_below: live.inside_below, counter: live.counter, front: live.front }); syncPeople(live.people); }
   else syncPeople([]);
@@ -438,10 +448,10 @@ setLine({});
 // "Place employee call": only calls when clicked (no auto-calls during the demo)
 $("callbtn").onclick = async () => {
   const b = $("callbtn");
-  b.disabled = true; b.textContent = "Calling…";
-  try { await fetch(`http://${location.hostname}:8765/call`); b.textContent = "✓ Employee called"; }
+  calling = true; b.disabled = true; b.textContent = "Calling…";
+  try { await fetch(`http://${location.hostname}:8765/call`); b.textContent = "✓ Employee called"; b.classList.add("done"); }
   catch (e) { b.textContent = "Call failed"; }
-  setTimeout(() => { b.disabled = false; b.textContent = "📞 Place employee call"; }, 8000);
+  setTimeout(() => { calling = false; b.classList.remove("done"); b.textContent = "📞 Place employee call"; }, 8000);
 };
 </script>
 </body>
