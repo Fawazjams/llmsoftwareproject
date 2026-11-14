@@ -57,6 +57,33 @@ DOOR_Y_FRAC = float(os.getenv("DOOR_Y_FRAC", "0.5"))          # door line height
 INSIDE_IS_BELOW = os.getenv("INSIDE_IS_BELOW", "1") == "1"     # flip if the door faces the other way
 
 
+def _envf(name, default):
+    try:
+        return float((os.getenv(name) or str(default)).split("#")[0].strip())
+    except ValueError:
+        return default
+
+
+def door_config():
+    """Door line config: live from state_export.CONFIG (dashboard) if present, else .env.
+    axis "y" = horizontal line (compare box center y), "x" = vertical line (compare center x).
+    "inside" is the greater-than side unless invert."""
+    cfg = getattr(state_export, "CONFIG", None) if state_export is not None else None
+    if isinstance(cfg, dict) and cfg.get("axis") in ("x", "y"):
+        try:
+            return cfg["axis"], min(max(float(cfg.get("pos", 0.5)), 0.0), 1.0), bool(cfg.get("invert", False))
+        except (TypeError, ValueError):
+            pass
+    axis = (os.getenv("DOOR_AXIS") or "y").split("#")[0].strip().lower()
+    axis = axis if axis in ("x", "y") else "y"
+    pos = _envf("DOOR_X_FRAC" if axis == "x" else "DOOR_Y_FRAC", 0.5)
+    return axis, min(max(pos, 0.0), 1.0), not INSIDE_IS_BELOW
+
+
+CROSS_COOLDOWN = 1.5  # s between counted crossings for the same person (stops jitter double counts)
+FORGET_AFTER = 3.0    # s: drop door state for track IDs not seen this long
+
+
 def _zone(name):
     v = (os.getenv(name) or "").split("#")[0].strip()
     try:
@@ -137,7 +164,8 @@ def main():
     cap = open_cap()
     model = YOLO("yolov8n.pt")  # class 0 = person
     last_side = {}
-    counted = defaultdict(set)  # pid -> directions already counted
+    last_cross = {}  # pid -> time of last counted crossing
+    last_seen = {}   # pid -> time last seen
     votes = defaultdict(lambda: deque(maxlen=VOTE_WINDOW))
     state = {"in_store": 0, "came_in": 0, "left": 0, "employees": 0, "emp_in": 0, "emp_out": 0}
     web_ui = os.getenv("WEB_UI", "1").split("#")[0].strip() == "1" and state_export is not None
@@ -161,7 +189,8 @@ def main():
             continue
 
         h, w = frame.shape[:2]
-        door_y = int(h * DOOR_Y_FRAC)
+        axis, pos, invert = door_config()
+        line_px = int((h if axis == "y" else w) * pos)
         zone_px = to_px(COUNTER_ZONE, w, h)
         front_px = to_px(COUNTER_FRONT_ZONE, w, h)
 
@@ -174,23 +203,30 @@ def main():
 
         state["employees"] = sum(1 for _, _, emp in people if emp)
 
-        margin = int(h * 0.05)  # dead band so jitter on the line doesn't count
+        now = time.time()
+        for pid in [p for p, t in last_seen.items() if now - t > FORGET_AFTER]:
+            last_seen.pop(pid, None)
+            last_side.pop(pid, None)
+            last_cross.pop(pid, None)
+
+        margin = int((h if axis == "y" else w) * 0.03)  # dead band so jitter on the line doesn't count
         for pid, box, employee in people:
-            cy = (box[1] + box[3]) / 2
-            if abs(cy - door_y) < margin:
+            last_seen[pid] = now
+            c = (box[1] + box[3]) / 2 if axis == "y" else (box[0] + box[2]) / 2
+            if abs(c - line_px) < margin:
                 side = last_side.get(pid)  # inside the dead band: keep the previous side
             else:
-                side = "inside" if (cy > door_y) == INSIDE_IS_BELOW else "outside"
+                side = "inside" if (c > line_px) != invert else "outside"
             prev = last_side.get(pid)
-            if (side and prev and prev != side and employee
-                    and side not in counted[pid]):  # employees are counted separately
-                counted[pid].add(side)
+            crossed = (side and prev and prev != side
+                       and now - last_cross.get(pid, 0.0) >= CROSS_COOLDOWN)
+            if crossed:
+                last_cross[pid] = now
+            if crossed and employee:  # role decided at the moment of crossing (majority vote)
                 key = "emp_in" if side == "inside" else "emp_out"
                 state[key] += 1
                 log(f"EMPLOYEE #{pid} {'came in' if side == 'inside' else 'left'}", state)
-            elif (side and prev and prev != side and not employee
-                    and side not in counted[pid]):  # each direction once per person
-                counted[pid].add(side)
+            elif crossed:
                 if side == "inside":
                     state["came_in"] += 1
                     state["in_store"] = max(state["came_in"] - state["left"], 0)
@@ -214,7 +250,10 @@ def main():
             alerts.send_alert(alert)
 
         # overlay
-        cv2.line(frame, (0, door_y), (w, door_y), (0, 0, 255), 2)
+        if axis == "y":
+            cv2.line(frame, (0, line_px), (w, line_px), (0, 0, 255), 2)
+        else:
+            cv2.line(frame, (line_px, 0), (line_px, h), (0, 0, 255), 2)
         if zone_px:
             cv2.rectangle(frame, zone_px[:2], zone_px[2:], (255, 120, 0), 2)
         if front_px:
