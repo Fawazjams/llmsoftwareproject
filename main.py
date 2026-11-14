@@ -1,4 +1,4 @@
-"""Footfall: live customer in/out counter (LLMSoftware x UTD Challenge 1).
+"""In-N-Out: live customer in/out counter (LLMSoftware x UTD Challenge 1).
 
 OWNER: Jamshed (issue #1). Other modules plug in through fixed functions:
   employee.py (Nandhan), stretch.py (Lokesh), alerts.py (Arpit).
@@ -29,7 +29,7 @@ try:
 except Exception:
     state_export = None
 
-WIN_VIDEO, WIN_LOG = "Footfall", "Event log"
+WIN_VIDEO, WIN_LOG = "In-N-Out", "Event log"
 PANEL_W, PANEL_H = 940, 530
 LOG_LINES = deque(maxlen=40)
 
@@ -81,7 +81,8 @@ def door_config():
 
 
 CROSS_COOLDOWN = 3.0  # s between counted crossings for the same person (stops jitter double counts)
-SPOT_FRAMES = 8       # frames a person must be tracked before the "spotted" log line
+UNATTENDED_SECONDS = float((os.getenv("UNATTENDED_SECONDS") or "10").split("#")[0].strip() or 10)
+SPOT_FRAMES = 8      # frames a person must be tracked before the "spotted" log line
 DEAD_BAND = 0.08     # fraction of frame around the line where side changes are ignored
 TOO_CLOSE = 0.60      # boxes wider than this fraction of the frame are too close to judge a crossing
 FORGET_AFTER = 3.0    # s: drop door state for track IDs not seen this long
@@ -171,6 +172,7 @@ def main():
     last_seen = {}   # pid -> time last seen
     role = {}        # pid -> True (employee) / False (customer), fixed at first crossing
     announced = set()  # pids already logged as spotted
+    unattended_since, unattended_alerted = None, False
     last_label = {}    # pid -> latest employee/customer vote
     votes = defaultdict(lambda: deque(maxlen=VOTE_WINDOW))
     state = {"in_store": 0, "came_in": 0, "left": 0, "employees": 0, "emp_in": 0, "emp_out": 0}
@@ -271,6 +273,19 @@ def main():
         # visible right now (same idea as "Employees on floor").
         visible_customers = sum(1 for p, _, emp in people if not role.get(p, emp))
         state["in_store"] = max(state["came_in"] - state["left"], visible_customers, 0)
+
+        # UNATTENDED ALERT: customer on camera, no employee on camera for UNATTENDED_SECONDS -> call owner.
+        visible_staff = sum(1 for p, _, emp in people if role.get(p, emp))
+        if visible_customers and not visible_staff:
+            unattended_since = unattended_since or now
+            if not unattended_alerted and now - unattended_since >= UNATTENDED_SECONDS:
+                unattended_alerted = True
+                msg = (f"{visible_customers} customer(s) on camera with no employee present "
+                       f"for {int(now - unattended_since)} s")
+                log(f"ALERT: {msg}")
+                alerts.send_alert(msg)
+        else:
+            unattended_since, unattended_alerted = None, False
 
         for alert in stretch.on_frame(people, front_px, zone_px):
             log(f"ALERT: {alert}")

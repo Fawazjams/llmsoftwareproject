@@ -1,4 +1,4 @@
-"""One-page live dashboard for Footfall: camera, counters, 3D floor twin, event log.
+"""One-page live dashboard for In-N-Out: camera, counters, 3D floor twin, event log.
 
 Run alongside main.py:  python dashboard.py   then open http://localhost:8000
 Reads live_state.json (written by state_export.py: positions only, no video) and events.log,
@@ -94,5 +94,5 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"Footfall dashboard on http://localhost:{PORT}")
+    print(f"In-N-Out dashboard on http://localhost:{PORT}")
     ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()

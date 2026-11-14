@@ -1,6 +1,6 @@
-# Footfall: Who's Coming, Who's Leaving
+# In-N-Out: Who's Coming, Who's Leaving
 
-**LLMSoftware x UT Dallas Hackathon, Challenge 1 (Surveillance.ai: Who's Coming, Who's Leaving).** A restaurant's camera already sees everything, but nobody watches it. Footfall turns a live camera into live answers: how many customers are in the store, who came in, who left, and how many staff are on the floor.
+**LLMSoftware x UT Dallas Hackathon, Challenge 1 (Surveillance.ai: Who's Coming, Who's Leaving).** A restaurant's camera already sees everything, but nobody watches it. In-N-Out turns a live camera into live answers: how many customers are in the store, who came in, who left, and how many staff are on the floor.
 
 ## What it does (mapped to the challenge)
 

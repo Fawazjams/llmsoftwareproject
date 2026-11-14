@@ -64,7 +64,7 @@ def _alert_worker(text: str) -> None:
         msg = _claude(
             "Rewrite this restaurant camera event as ONE short SMS line for the owner "
             f"(max 20 words, plain text, no emoji, no quotes):\n{text}", 1024) or text
-        _sms(f"Footfall: {msg}")
+        _sms(f"In-N-Out: {msg}")
     except Exception as e:
         print(f"[alerts] send_alert error: {e}")
 
@@ -88,14 +88,14 @@ def _summary_worker(log_path: str) -> None:
             print("[alerts] log is empty, nothing to summarize")
             return
         summary = _claude(
-            "You are Footfall reporting to a restaurant owner. From this event log, write a "
+            "You are In-N-Out reporting to a restaurant owner. From this event log, write a "
             "3-4 line plain-text summary: total customers in/out, peak customers in store, staff "
             "coverage (employees on floor), and any alerts. Be concrete, no markdown.\n\n"
             + "\n".join(lines), 1024)
         if not summary:
             summary = f"{len(lines)} events logged (AI summary unavailable). Last: {lines[-1]}"
         print("\n=== Session summary ===\n" + summary + "\n=======================")
-        _sms(f"Footfall summary:\n{summary}", force=True)
+        _sms(f"In-N-Out summary:\n{summary}", force=True)
     except Exception as e:
         print(f"[alerts] summarize_session error: {e}")
 
