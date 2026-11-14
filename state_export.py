@@ -100,6 +100,11 @@ class _Handler(BaseHTTPRequestHandler):
                     self.end_headers()
                 else:
                     self._send(jpg, "image/jpeg")
+            elif path == "/call":
+                import alerts
+                threading.Thread(target=alerts._sms, kwargs={"force": True, "body":
+                                 "In-N-Out: customer waiting, no employee on the floor."}, daemon=True).start()
+                self._send(b'{"ok": true}', "application/json")
             elif path == "/summary":
                 import alerts
                 threading.Thread(target=alerts.summarize_session, args=("events.log",), daemon=True).start()
@@ -176,7 +181,7 @@ def write_state(state, people, w, h, log=None):
         data = {
             "t": now,
             "counts": {k: int(state.get(k, 0))
-                       for k in ("in_store", "came_in", "left", "employees", "emp_in", "emp_out")},
+                       for k in ("in_store", "came_in", "left", "employees", "emp_in", "emp_out", "unattended")},
             "people": [
                 {"id": int(pid), "role": "employee" if emp else "customer",
                  "x": round((b[0] + b[2]) / 2 / w, 4), "y": round(b[3] / h, 4),

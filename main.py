@@ -282,10 +282,10 @@ def main():
                 unattended_alerted = True
                 msg = (f"{visible_customers} customer(s) on camera with no employee present "
                        f"for {int(now - unattended_since)} s")
-                log(f"ALERT: {msg}")
-                alerts.send_alert(msg)
+                log(f"ALERT: {msg}")  # no auto-call: the dashboard shows a "Place employee call" button
         else:
             unattended_since, unattended_alerted = None, False
+        state["unattended"] = int(bool(visible_customers and not visible_staff))
 
         for alert in stretch.on_frame(people, front_px, zone_px):
             log(f"ALERT: {alert}")

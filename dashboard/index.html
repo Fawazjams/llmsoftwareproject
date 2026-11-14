@@ -70,6 +70,13 @@
   .linectl input[type=range] { flex:1; min-width:140px; accent-color:#e53935; }
   .linectl #lc-val { font-variant-numeric:tabular-nums; min-width:3ch; font-weight:700; }
   .lc-sides { color:var(--muted); font-size:12px; }
+  .callbar { display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-top:12px; padding:12px 14px;
+    background:#ffe3e0; border:3px solid #000; box-shadow:4px 4px 0 #000; font-weight:700; }
+  .callbar[hidden] { display:none; }
+  .callbar button { margin-left:auto; background:#e53935; color:#fff; border:3px solid #000; box-shadow:4px 4px 0 #000;
+    font:800 18px/1 inherit; padding:14px 22px; cursor:pointer; text-transform:uppercase; letter-spacing:.5px; }
+  .callbar button:active { transform:translate(3px,3px); box-shadow:1px 1px 0 #000; }
+  .callbar button:disabled { background:#2e7d32; cursor:default; }
 </style>
 </head>
 <body>
@@ -84,6 +91,10 @@
       <span class="rec">REC OFF · no video saved</span>
       <div><b>Live footage</b><span>Camera feed appears here when main.py is streaming</span></div>
       <img id="feed" hidden alt="Live camera">
+    </div>
+    <div id="callbar" class="callbar" hidden>
+      <span>Customer waiting · no employee on the floor</span>
+      <button id="callbtn" type="button">📞 Place employee call</button>
     </div>
     <div class="linectl">
       <b>Door line</b>
@@ -383,6 +394,7 @@ async function poll() {
   $("live").className = live ? "live" : "live off";
   $("live").lastChild.textContent = live ? "Live" : "Offline";
   $("tracked").textContent = live ? `${live.people.length} tracked` : "3D";
+  $("callbar").hidden = !(live && live.unattended);
   $("hud").textContent = live ? `${live.people.length} TRACKED · ${live.in_store} IN STORE · ${live.employees} STAFF` : "WAITING FOR MAIN.PY";
   if (live) { buildPlan({ door: live.door, inside_below: live.inside_below, counter: live.counter, front: live.front }); syncPeople(live.people); }
   else syncPeople([]);
@@ -422,6 +434,15 @@ $("lc-swap").onclick = () => setLine({ invert: line.invert ? 0 : 1 });
 $("lc-pos").oninput = e => { $("lc-val").textContent = e.target.value + "%"; };
 $("lc-pos").onchange = e => setLine({ pos: e.target.value / 100 });
 setLine({});
+
+// "Place employee call": only calls when clicked (no auto-calls during the demo)
+$("callbtn").onclick = async () => {
+  const b = $("callbtn");
+  b.disabled = true; b.textContent = "Calling…";
+  try { await fetch(`http://${location.hostname}:8765/call`); b.textContent = "✓ Employee called"; }
+  catch (e) { b.textContent = "Call failed"; }
+  setTimeout(() => { b.disabled = false; b.textContent = "📞 Place employee call"; }, 8000);
+};
 </script>
 </body>
 </html>
