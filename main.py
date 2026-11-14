@@ -110,7 +110,8 @@ def _line_color(line):
 def render_log_panel(state):
     img = np.full((PANEL_H, PANEL_W, 3), 24, dtype=np.uint8)
     header = (f"In store: {state['in_store']}   Came in: {state['came_in']}   "
-              f"Left: {state['left']}   Employees: {state['employees']}")
+              f"Left: {state['left']}   Employees: {state['employees']}   "
+              f"Staff in/out: {state.get('emp_in', 0)}/{state.get('emp_out', 0)}")
     cv2.rectangle(img, (0, 0), (PANEL_W, 48), (45, 45, 45), -1)
     cv2.putText(img, header, (14, 32), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 255, 255), 2)
     font, scale = cv2.FONT_HERSHEY_SIMPLEX, 0.5
@@ -138,7 +139,7 @@ def main():
     last_side = {}
     counted = defaultdict(set)  # pid -> directions already counted
     votes = defaultdict(lambda: deque(maxlen=VOTE_WINDOW))
-    state = {"in_store": 0, "came_in": 0, "left": 0, "employees": 0}
+    state = {"in_store": 0, "came_in": 0, "left": 0, "employees": 0, "emp_in": 0, "emp_out": 0}
     cv2.namedWindow(WIN_VIDEO, cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
     cv2.resizeWindow(WIN_VIDEO, PANEL_W, PANEL_H)
     cv2.moveWindow(WIN_VIDEO, 0, 0)
@@ -176,7 +177,13 @@ def main():
             else:
                 side = "inside" if (cy > door_y) == INSIDE_IS_BELOW else "outside"
             prev = last_side.get(pid)
-            if (side and prev and prev != side and not employee
+            if (side and prev and prev != side and employee
+                    and side not in counted[pid]):  # employees are counted separately
+                counted[pid].add(side)
+                key = "emp_in" if side == "inside" else "emp_out"
+                state[key] += 1
+                log(f"EMPLOYEE #{pid} {'came in' if side == 'inside' else 'left'}", state)
+            elif (side and prev and prev != side and not employee
                     and side not in counted[pid]):  # each direction once per person
                 counted[pid].add(side)
                 if side == "inside":
@@ -208,8 +215,9 @@ def main():
         if front_px:
             cv2.rectangle(frame, front_px[:2], front_px[2:], (255, 255, 0), 1)
         hud = [f"Customers in store: {state['in_store']}", f"Came in: {state['came_in']}",
-               f"Left: {state['left']}", f"Employees on floor: {state['employees']}"] + stretch.hud_lines()
-        cv2.rectangle(frame, (0, 0), (340, 18 + 28 * len(hud)), (0, 0, 0), -1)
+               f"Left: {state['left']}", f"Employees on floor: {state['employees']}",
+               f"Staff in: {state['emp_in']}  Staff out: {state['emp_out']}"] + stretch.hud_lines()
+        cv2.rectangle(frame, (0, 0), (360, 18 + 28 * len(hud)), (0, 0, 0), -1)
         for i, t in enumerate(hud):
             cv2.putText(frame, t, (10, 28 + 28 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
