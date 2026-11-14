@@ -269,9 +269,10 @@ def main():
         hud = [f"Customers in store: {state['in_store']}", f"Came in: {state['came_in']}",
                f"Left: {state['left']}", f"Employees on floor: {state['employees']}",
                f"Staff in: {state['emp_in']}  Staff out: {state['emp_out']}"] + stretch.hud_lines()
-        cv2.rectangle(frame, (0, 0), (360, 18 + 28 * len(hud)), (0, 0, 0), -1)
-        for i, t in enumerate(hud):
-            cv2.putText(frame, t, (10, 28 + 28 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        if not web_ui:  # the web dashboard shows the counters; keep the video clean there
+            cv2.rectangle(frame, (0, 0), (360, 18 + 28 * len(hud)), (0, 0, 0), -1)
+            for i, t in enumerate(hud):
+                cv2.putText(frame, t, (10, 28 + 28 * i), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
         if state_export is not None:
             try:
