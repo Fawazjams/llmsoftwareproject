@@ -80,7 +80,9 @@ def door_config():
     return axis, min(max(pos, 0.0), 1.0), not INSIDE_IS_BELOW
 
 
-CROSS_COOLDOWN = 1.5  # s between counted crossings for the same person (stops jitter double counts)
+CROSS_COOLDOWN = 3.0  # s between counted crossings for the same person (stops jitter double counts)
+DEAD_BAND = 0.08      # fraction of frame around the line where side changes are ignored
+TOO_CLOSE = 0.60      # boxes wider than this fraction of the frame are too close to judge a crossing
 FORGET_AFTER = 3.0    # s: drop door state for track IDs not seen this long
 
 
@@ -166,6 +168,7 @@ def main():
     last_side = {}
     last_cross = {}  # pid -> time of last counted crossing
     last_seen = {}   # pid -> time last seen
+    role = {}        # pid -> True (employee) / False (customer), fixed at first crossing
     votes = defaultdict(lambda: deque(maxlen=VOTE_WINDOW))
     state = {"in_store": 0, "came_in": 0, "left": 0, "employees": 0, "emp_in": 0, "emp_out": 0}
     web_ui = os.getenv("WEB_UI", "1").split("#")[0].strip() == "1" and state_export is not None
@@ -209,19 +212,24 @@ def main():
             last_side.pop(pid, None)
             last_cross.pop(pid, None)
 
-        margin = int((h if axis == "y" else w) * 0.03)  # dead band so jitter on the line doesn't count
+        margin = int((h if axis == "y" else w) * DEAD_BAND)  # dead band so jitter on the line doesn't count
         for pid, box, employee in people:
             last_seen[pid] = now
+            employee = role.get(pid, employee)  # keep the role from their first crossing
             c = (box[1] + box[3]) / 2 if axis == "y" else (box[0] + box[2]) / 2
-            if abs(c - line_px) < margin:
+            too_close = (box[2] - box[0]) > TOO_CLOSE * w
+            if abs(c - line_px) < margin or too_close:
                 side = last_side.get(pid)  # inside the dead band: keep the previous side
             else:
                 side = "inside" if (c > line_px) != invert else "outside"
             prev = last_side.get(pid)
             crossed = (side and prev and prev != side
                        and now - last_cross.get(pid, 0.0) >= CROSS_COOLDOWN)
+            if crossed and not employee and side != "inside" and state["came_in"] - state["left"] <= 0:
+                crossed = False  # nobody counted inside yet: don't let Left exceed Came in
             if crossed:
                 last_cross[pid] = now
+                role.setdefault(pid, employee)
             if crossed and employee:  # role decided at the moment of crossing (majority vote)
                 key = "emp_in" if side == "inside" else "emp_out"
                 state[key] += 1
