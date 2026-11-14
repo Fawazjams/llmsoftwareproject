@@ -29,6 +29,13 @@
            display:flex; flex-direction:column; min-height:0; }
   .panel h2 { margin:0; padding:8px 12px; font-size:12px; color:var(--dim); text-transform:uppercase;
               letter-spacing:.6px; border-bottom:1px solid var(--line); }
+  .cam-h { display:flex; align-items:center; gap:10px; }
+  .ctl { margin-left:auto; display:flex; align-items:center; gap:8px; text-transform:none; letter-spacing:0; }
+  .ctl button { background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:5px;
+                padding:2px 8px; font-size:11px; cursor:pointer; }
+  .ctl button:hover { border-color:var(--dim); }
+  .ctl input[type=range] { width:120px; accent-color:var(--red); }
+  #l-pct { min-width:32px; font-variant-numeric:tabular-nums; color:var(--text); }
   .video img { width:100%; height:100%; object-fit:contain; background:#000; min-height:0; flex:1; }
   #log { margin:0; padding:10px 12px; overflow:auto; flex:1; font:12.5px/1.6 ui-monospace, Consolas, monospace;
          white-space:pre; }
@@ -55,7 +62,14 @@
 </section>
 
 <section class="main">
-  <div class="panel video"><h2>Camera</h2><img id="cam" src="/frame.jpg" alt="Live camera"></div>
+  <div class="panel video"><h2 class="cam-h">Camera
+    <span class="ctl">
+      <span>Door line</span>
+      <button id="l-axis" type="button" title="Switch horizontal / vertical">Horizontal</button>
+      <input id="l-pos" type="range" min="5" max="95" value="50" aria-label="Door line position">
+      <span id="l-pct">50%</span>
+      <button id="l-inv" type="button" title="Swap which side is inside">Swap in/out</button>
+    </span></h2><img id="cam" src="/frame.jpg" alt="Live camera"></div>
   <div class="panel log"><h2>Event log</h2><pre id="log"></pre></div>
   <div class="panel three"><h2>3D store view</h2><div id="three-slot" class="empty"><div>
     Add <code>?three=http://localhost:PORT</code> to this page's URL to show the 3D model</div></div></div>
@@ -92,6 +106,26 @@
   }
   nextFrame();
   document.getElementById("sum").onclick = () => fetch("/summary");
+
+  // Door-line controls -> /config (main.py reads it every frame)
+  const lAxis = document.getElementById("l-axis"), lPos = document.getElementById("l-pos"),
+        lPct = document.getElementById("l-pct"), lInv = document.getElementById("l-inv");
+  let line = null, dragging = false;
+  function showLine(c) {
+    line = c;
+    lAxis.textContent = c.axis === "x" ? "Vertical" : "Horizontal";
+    if (!dragging) lPos.value = Math.round(c.pos * 100);
+    lPct.textContent = Math.round(c.pos * 100) + "%";
+    lInv.style.borderColor = c.invert ? "var(--orange)" : "";
+  }
+  async function setLine(q) {
+    try { showLine(await (await fetch("/config?" + new URLSearchParams(q), {cache: "no-store"})).json()); } catch (e) {}
+  }
+  lAxis.onclick = () => setLine({axis: line && line.axis === "x" ? "y" : "x"});
+  lInv.onclick = () => setLine({invert: line && line.invert ? "0" : "1"});
+  lPos.oninput = () => { dragging = true; lPct.textContent = lPos.value + "%"; setLine({pos: lPos.value / 100}); };
+  lPos.onchange = () => { dragging = false; };
+  setLine({});
 </script>
 </body>
 </html>

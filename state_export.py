@@ -29,11 +29,43 @@ _frame_cv = threading.Condition()
 _server_started = False
 
 
-def _door_y():
+def _env(name, default):
+    return ((os.getenv(name) or "").split("#")[0].strip()) or default
+
+
+def _float(v, default):
     try:
-        return float((os.getenv("DOOR_Y_FRAC") or "0.5").split("#")[0].strip())
-    except ValueError:
-        return 0.5
+        return float(v)
+    except (TypeError, ValueError):
+        return default
+
+
+def _door_y():
+    return _float(_env("DOOR_Y_FRAC", "0.5"), 0.5)
+
+
+def _init_config():
+    axis = _env("DOOR_AXIS", "y").lower()
+    axis = axis if axis in ("x", "y") else "y"
+    pos = _float(_env("DOOR_X_FRAC" if axis == "x" else "DOOR_Y_FRAC", "0.5"), 0.5)
+    return {"axis": axis, "pos": min(max(pos, 0.05), 0.95), "invert": _env("INSIDE_IS_BELOW", "1") == "0"}
+
+
+# Door line, editable live from the dashboard. main.py reads this every frame.
+CONFIG = _init_config()
+
+
+def update_config(params):
+    """params: dict of str -> str (axis, pos, invert). Returns a copy of CONFIG."""
+    with _lock:
+        axis = (params.get("axis") or "").lower()
+        if axis in ("x", "y"):
+            CONFIG["axis"] = axis
+        if params.get("pos") not in (None, ""):
+            CONFIG["pos"] = round(min(max(_float(params["pos"], CONFIG["pos"]), 0.05), 0.95), 3)
+        if params.get("invert") in ("0", "1"):
+            CONFIG["invert"] = params["invert"] == "1"
+        return dict(CONFIG)
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -56,6 +88,10 @@ class _Handler(BaseHTTPRequestHandler):
             elif path in ("/", "/index.html"):
                 with open(os.path.join(HERE, "dashboard.html"), "rb") as f:
                     self._send(f.read(), "text/html; charset=utf-8")
+            elif path == "/config":
+                from urllib.parse import parse_qs, urlparse
+                q = {k: v[0] for k, v in parse_qs(urlparse(self.path).query).items()}
+                self._send(json.dumps(update_config(q)).encode(), "application/json")
             elif path == "/frame.jpg":
                 with _frame_cv:
                     jpg = _jpeg
@@ -148,6 +184,7 @@ def write_state(state, people, w, h, log=None):
                 for pid, b, emp in people
             ],
             "door_y": _door_y(),
+            "line": dict(CONFIG),
             "log": list(log or []),
         }
         body = json.dumps(data).encode()
