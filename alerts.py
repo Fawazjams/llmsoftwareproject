@@ -66,11 +66,16 @@ def _sms(body: str, force: bool = False) -> None:
             return
         except Exception as e:
             print(f"[alerts] SMS blocked ({str(e)[:60]}), calling instead")
-    # Trial accounts can only use Twilio's predefined voice template: the owner's phone rings.
+    # Spoken alert: Twilio's hosted Twimlet reads CALL_SCRIPT aloud (works on trial accounts, which
+    # block inline TwiML). On a trial, the callee hears Twilio's trial notice first and presses any key.
     try:
-        client.calls.create(to=to, from_=frm, url=os.getenv(
-            "TWILIO_CALL_URL", "https://webhooks.twilio.com/v1/Voice/Template/voice_speech_recognition"))
-        print(f"[CALL placed to owner] {body}")
+        import urllib.parse
+        script = os.getenv("CALL_SCRIPT", "").split("#")[0].strip() or (
+            "In N Out alert. A customer is waiting and no employee is on the floor. "
+            "Please go help them now. Again: a customer is waiting with no employee on the floor.")
+        url = "https://twimlets.com/message?" + urllib.parse.urlencode({"Message[0]": script})
+        client.calls.create(to=to, from_=frm, url=url)
+        print(f"[CALL placed to employee] {body}")
     except Exception as e:
         print(f"[alerts] Twilio call failed: {type(e).__name__}: {str(e)[:100]} | {body}")
 
